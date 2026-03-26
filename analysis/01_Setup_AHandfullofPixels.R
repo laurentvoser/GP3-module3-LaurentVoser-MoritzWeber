@@ -12,6 +12,7 @@ install.packages("rlang")
 # next install dplyr needed to manipulate
 # tidy data as discussed in the R crash course
 install.packages("dplyr")
+install.packages("tidyverse")
 
 # for convenient plotting we also install
 # ggplot2 (this is not required but most plots shown
