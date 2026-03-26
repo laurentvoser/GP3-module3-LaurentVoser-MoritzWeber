@@ -1,0 +1,18 @@
+---
+title: "Report_VoserWeber"
+output: html_document
+---
+
+## 8.1.1 Physical geography and phenology
+
+1. What does the intercept indicate?
+
+The intercept indicates the value of the outcome (DOY) when the predictor (altitude) is zero.
+
+2. How can you interpret the slope?
+
+With higher altitude, the DOY increases (~37 days per 1'000 m of elevation gain), meaning the vegetation greenup is later in the year.
+
+3. How to convert the established relationship with altitude, to one with temperature (Without actually doing it, just describe how you would go about this and what you would expect? Can you approximate the effect of 1 degree of warming?)
+
+Depending on the atmosphere's local water content, air temperature decreases by 0.5 - 1.0 °C per 100 meters of elevation. This relationship could be used to create a model which would predict the change of time in the local vegetation greenup - say the temperature rises by 1 °C (and the atmosphere is dry), then the vegetation greenup would occur ~3.7 days earlier.

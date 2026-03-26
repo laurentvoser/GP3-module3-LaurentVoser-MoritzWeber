@@ -88,3 +88,60 @@ land_cover_raster <- MODISTools::mt_to_terra(
   land_cover,
   reproject = TRUE
 )
+p <- ggplot() +
+  tidyterra::geom_spatraster(data = dem) +
+  scale_fill_viridis_c(
+    na.value = NA,
+    name = "altitude (m)"
+  ) +
+  theme_bw()
+
+p2 <- ggplot() +
+  tidyterra::geom_spatraster(data = phenology_raster) +
+  scale_fill_viridis_c(
+    na.value = NA,
+    name = "DOY"
+  ) +
+  theme_bw()
+
+# compositing with patchwork package
+library(patchwork)
+p + p2 + 
+  plot_layout(ncol = 1) + 
+  plot_annotation(
+    tag_levels = "a",
+    tag_prefix = "(",
+    tag_suffix = ")"
+  )
+# convert to data frame and merge
+dem_df <- as.vector(dem)
+phenology_df <- as.vector(phenology_raster)
+sct_df <- data.frame(
+  altitude = dem_df,
+  doy = phenology_df
+)
+
+ggplot(
+  data = sct_df,
+  aes(
+    altitude,
+    doy
+  )
+) +
+  geom_hex() +
+  scale_fill_viridis_c(trans="log10") +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    colour = "white",
+    lty = 2
+  ) +
+  labs(
+    x = "altitude (m)",
+    y = "MODIS vegetation greenup (DOY)"
+  ) +
+  theme_bw()
+# fit a linear regression to the data of the figure above
+# (for the pre-processing see the collapsed code of the figure)
+fit <- lm(doy ~ altitude, data = sct_df)
+print(summary(fit))
