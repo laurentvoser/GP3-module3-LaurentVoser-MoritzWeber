@@ -110,7 +110,6 @@ dem_late  <- terra::mask(dem_resampled, late_maturity, maskvalues=FALSE)
 
 vals_early <- as.numeric(terra::values(dem_early, na.rm=TRUE))
 vals_late  <- as.numeric(terra::values(dem_late, na.rm=TRUE))
-vals_rest  <- as.numeric(terra::values(dem_resampled, na.rm=TRUE))
 neither <- mask_forest_aligned & !early_greenup & !late_maturity
 dem_rest <- terra::mask(dem_resampled, neither, maskvalues = FALSE)
 vals_rest <- as.numeric(terra::values(dem_rest, na.rm = TRUE))
@@ -125,7 +124,7 @@ boxplot(vals_early, vals_late, vals_rest,
         ylab="Elevation (m)")
 
 # --- Karte mit OpenStreetMap Hintergrund ---
-tmap_mode("plot")
+tmap_mode("view")
 
 safe_tm_shape <- function(rast, col, title) {
   if(all(is.na(values(rast)))) return(NULL)
@@ -133,7 +132,7 @@ safe_tm_shape <- function(rast, col, title) {
 }
 
 tm <- tm_tiles("OpenStreetMap") +
-  tm_shape(mask_forest) + tm_raster(palette="lightgreen", alpha=0.3, title="Forest Mask")
+  tm_shape(mask_forest_aligned) + tm_raster(palette="lightgreen", alpha=0.3, title="Forest Mask")
 
 tm_early <- safe_tm_shape(early_greenup, "yellow", "Early Greenup")
 tm_late  <- safe_tm_shape(late_maturity, "red", "Late Maturity")
