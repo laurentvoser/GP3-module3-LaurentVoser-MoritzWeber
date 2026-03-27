@@ -15,14 +15,15 @@ phenology <- mt_subset(
   lat = lat,
   lon = lon,
   band = c("Greenup.Num_Modes_01","Maturity.Num_Modes_01"),
-  start = paste0(min(years),"-01-01"),
-  end   = paste0(max(years),"-12-31"),
+  start = "2001-01-01",
+  end   = "2010-12-31",
   km_lr = 100, km_ab = 100,
   site_name = "adirondacks",
   internal = TRUE, progress = FALSE
 )
 
 # Aufbereiten
+
 phenology <- phenology %>%
   mutate(
     value = ifelse(value > 30000, NA, value),
@@ -49,16 +50,35 @@ land_cover <- mt_subset(
 lc_raster <- mt_to_terra(land_cover, reproject = TRUE)
 mask_forest <- lc_raster %in% c(4,5)
 
-greenup_raster <- mask(greenup_raster, mask_forest, maskvalues=FALSE)
-maturity_raster <- mask(maturity_raster, mask_forest, maskvalues=FALSE)
 
 # --- DOY-Raster erstellen ---
 # Werte in DOY umwandeln
-greenup_raster_doy <- greenup_raster
-maturity_raster_doy <- maturity_raster
-values(greenup_raster_doy) <- greenup$doy
-values(maturity_raster_doy) <- maturity$doy
 
+# Use raw (unmasked) rasters as source for DOY conversion
+greenup_raw  <- mt_to_terra(greenup,   reproject = TRUE)
+maturity_raw <- mt_to_terra(maturity,  reproject = TRUE)
+
+# Convert the full values matrix (preserves spatial order)
+to_doy_matrix <- function(r) {
+  v <- values(r)                         # N-cells × L-layers matrix
+  v[v > 30000] <- NA
+  matrix(
+    as.numeric(format(as.Date("1970-01-01") + as.vector(v), "%j")),
+    nrow = nrow(v), ncol = ncol(v)
+  )
+}
+
+greenup_raster_doy  <- greenup_raw
+maturity_raster_doy <- maturity_raw
+values(greenup_raster_doy)  <- to_doy_matrix(greenup_raw)
+values(maturity_raster_doy) <- to_doy_matrix(maturity_raw)
+
+# Re-align mask grid (MCD12Q1 and MCD12Q2 may not snap perfectly after reproject)
+mask_forest_aligned <- resample(mask_forest, greenup_raster_doy, method = "near")
+
+# Apply mask AFTER DOY conversion
+greenup_raster_doy  <- mask(greenup_raster_doy,  mask_forest_aligned, maskvalues = FALSE)
+maturity_raster_doy <- mask(maturity_raster_doy, mask_forest_aligned, maskvalues = FALSE)
 # --- LTM und SD 2001-2009 ---
 greenup_hist <- greenup_raster_doy[[1:9]]
 maturity_hist <- maturity_raster_doy[[1:9]]
@@ -83,7 +103,7 @@ terra::plot(late_maturity, main="Late Maturity 2010")
 # --- DEM / Höhe ---
 dem_us <- geodata::elevation_30s(country="USA", path=tempdir())
 dem_us <- terra::project(dem_us, crs(greenup_raster))
-dem_resampled <- terra::resample(dem_us, greenup_raster[[10]], method="bilinear")
+dem_resampled <- terra::resample(dem_us, greenup_raster_doy[[10]], method="bilinear")
 
 dem_early <- terra::mask(dem_resampled, early_greenup, maskvalues=FALSE)
 dem_late  <- terra::mask(dem_resampled, late_maturity, maskvalues=FALSE)
@@ -91,7 +111,9 @@ dem_late  <- terra::mask(dem_resampled, late_maturity, maskvalues=FALSE)
 vals_early <- as.numeric(terra::values(dem_early, na.rm=TRUE))
 vals_late  <- as.numeric(terra::values(dem_late, na.rm=TRUE))
 vals_rest  <- as.numeric(terra::values(dem_resampled, na.rm=TRUE))
-vals_rest  <- vals_rest[!(vals_rest %in% c(vals_early, vals_late))]
+neither <- mask_forest_aligned & !early_greenup & !late_maturity
+dem_rest <- terra::mask(dem_resampled, neither, maskvalues = FALSE)
+vals_rest <- as.numeric(terra::values(dem_rest, na.rm = TRUE))
 
 vals_early <- if(length(vals_early)==0) NA else vals_early
 vals_late  <- if(length(vals_late)==0) NA else vals_late
