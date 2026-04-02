@@ -27,7 +27,8 @@ For the years 2001 - 2009 calculate the long term mean (LTM) and standard deviat
 
 Describe the observed patterns and speculate about the underlying reasons. In addition, download a digital elevation map for the United States (30s resolution), and compare differences in altitude (e.g. a boxplot) across locations where you do or do not see any patterns in phenology.
 
-### Code
+# Code
+##Setup
 ```{r}
 library(MODISTools)
 library(terra)
@@ -39,25 +40,15 @@ library(tmap)
 lat <- 43.5
 lon <- -74.5
 years <- 2001:2010
-
-# --- MODIS Phenology-Daten laden ---
-phenology <- mt_subset(
-  product = "MCD12Q2",
-  lat = lat,
-  lon = lon,
-  band = c("Greenup.Num_Modes_01","Maturity.Num_Modes_01"),
-  start = "2001-01-01",
-  end   = "2010-12-31",
-  km_lr = 100, km_ab = 100,
-  site_name = "adirondacks",
-  internal = TRUE, progress = FALSE
-)
+```
+##Daten einlesen
+```{r}
+phenology <- read.csv("data-raw/phenology.csv")
+land_cover <- read.csv("data-raw/land_cover")
 ```
 
-
+##Daten Aufbereiten
 ```{r}
-# Aufbereiten
-
 phenology <- phenology %>%
   mutate(
     value = ifelse(value > 30000, NA, value),
@@ -73,24 +64,14 @@ maturity_raster <- mt_to_terra(maturity, reproject=TRUE)
 ```
 
 
+##Land Cover (Wald) Maske erstellen
 ```{r}
-# --- Landcover filtern (2010) ---
-land_cover <- mt_subset(
-  product = "MCD12Q1",
-  lat = lat, lon = lon,
-  band = "LC_Type1",
-  start = "2010-01-01", end = "2010-12-31",
-  km_lr = 100, km_ab = 100,
-  site_name = "adirondacks_lc",
-  internal = TRUE
-)
 lc_raster <- mt_to_terra(land_cover, reproject = TRUE)
 mask_forest <- lc_raster %in% c(4,5)
 ```
 
-
+## DOY-Raster erstellen
 ```{r}
-# --- DOY-Raster erstellen ---
 # Werte in DOY umwandeln
 
 # Use raw (unmasked) rasters as source for DOY conversion
@@ -138,8 +119,10 @@ late_maturity  <- maturity_2010 > (maturity_ltm + maturity_sd)
 par(mfrow=c(1,2))
 terra::plot(early_greenup, main="Early Greenup 2010")
 terra::plot(late_maturity, main="Late Maturity 2010")
+```
 
-# --- DEM / Höhe ---
+##Greenup und Maturity vs. 
+```{r}
 dem_us <- geodata::elevation_30s(country="USA", path=tempdir())
 dem_us <- terra::project(dem_us, crs(greenup_raster))
 dem_resampled <- terra::resample(dem_us, greenup_raster_doy[[10]], method="bilinear")
@@ -157,37 +140,26 @@ vals_early <- if(length(vals_early)==0) NA else vals_early
 vals_late  <- if(length(vals_late)==0) NA else vals_late
 vals_rest  <- if(length(vals_rest)==0) NA else vals_rest
 
-boxplot(vals_early, vals_late, vals_rest,
-        names=c("Early Greenup","Late Maturity","Other"),
-        main="Elevation vs Phenology Patterns",
-        ylab="Elevation (m)")
+boxplot(vals_early, vals_late,
+        names=c("Early Greenup","Late Maturity"),
+        main="Elevation vs. Phenology Patterns",
+        ylab="Elevation (m.a.s.l.)")
 ```
 
 ```{r}
-tmap_mode("view")
-
-safe_tm_shape <- function(rast, col, title) {
-  rast_true <- ifel(rast, 1, NA)
-  if (all(is.na(values(rast_true)))) return(NULL)
-  tm_shape(rast_true) +
-    tm_raster(palette = col, alpha = 0.6, title = title)
-}
+tmap_mode("plot")
 
 tm <- tm_tiles("OpenStreetMap") +
-  tm_shape(ifel(mask_forest_aligned == 1, 1, NA)) +
-  tm_raster(palette = "lightgreen", alpha = 0.3, title = "Forest Mask")
+  tm_shape(ifel(as.numeric(mask_forest_aligned) == 1, 1, NA)) +
+    tm_raster(palette = "green", alpha = 1, title = "Forest Mask") +
+  tm_shape(ifel(as.numeric(early_greenup) == 1, 1, NA)) +
+    tm_raster(palette = "orange", alpha = 1, title = "Early Greenup") +
+  tm_shape(ifel(as.numeric(late_maturity) == 1, 1, NA)) +
+    tm_raster(palette = "red", alpha = 1, title = "Late Maturity") +
+  tm_title("Phenology Patterns 2010")
 
-tm_early <- safe_tm_shape(early_greenup, "yellow", "Early Greenup")
-tm_late  <- safe_tm_shape(late_maturity,  "red",   "Late Maturity")
-
-if (!is.null(tm_early)) tm <- tm + tm_early
-if (!is.null(tm_late))  tm <- tm + tm_late
-
-tm <- tm + tm_title("Phenology Patterns 2010")
 tm
-
 ```
-
 
 
 
