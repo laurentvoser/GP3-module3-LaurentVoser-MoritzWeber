@@ -2,5 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
+<<<<<<< HEAD
 data
+=======
+>>>>>>> df4b9d12ff79c1c094ca7021ca0d4d221f3420a5
 data-raw
