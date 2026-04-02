@@ -3,41 +3,18 @@ library(tidyverse)
 library(geodata)
 
 # download SRTM data
-# This stores file srtm_38_03.tif in 
-# subfolder elevation of tempdir()
-geodata::elevation_3s(
-  lat = 46.6756,
-  lon = 7.85480,
-  path = tempdir()
-)
+srtm_path <- file.path("data-raw", "elevation", "srtm_38_03.tif")
 
-# read the downloaded data
-# use file.path() to combine
-# a directory path with a filename
-dem <- terra::rast(
-  file.path(
-    tempdir(),
-    "elevation",
-    "srtm_38_03.tif"
-  )
-)
+dem <- terra::rast(srtm_path)
+
 # load libraries
 library(MODISTools)
 
 # download and save phenology data
-phenology <- MODISTools::mt_subset(
-  product = "MCD12Q2",
-  lat = 46.6756,
-  lon = 7.85480,
-  band = "Greenup.Num_Modes_01",
-  start = "2012-01-01",
-  end = "2012-12-31",
-  km_lr = 100,
-  km_ab = 100,
-  site_name = "swiss",
-  internal = TRUE,
-  progress = FALSE
-)
+phenology_path <- file.path("data-raw", "phenology.rds")
+
+phenology <- readRDS(phenology_path)
+
 # screening of data
 phenology <- phenology |>
   mutate(
@@ -71,19 +48,10 @@ dem <- terra::mask(
   maskvalues = TRUE
 )
 # download and save land cover data
-land_cover <- MODISTools::mt_subset(
-  product = "MCD12Q1",
-  lat = 46.6756,
-  lon = 7.85480,
-  band = "LC_Type1",
-  start = "2012-01-01",
-  end = "2012-12-31",
-  km_lr = 100,
-  km_ab = 100,
-  site_name = "swiss",
-  internal = TRUE,
-  progress = FALSE
-)
+land_cover_path <- file.path("data-raw", "land_cover.rds")
+
+land_cover <- readRDS(land_cover_path)
+
 land_cover_raster <- MODISTools::mt_to_terra(
   land_cover,
   reproject = TRUE
@@ -104,15 +72,20 @@ p2 <- ggplot() +
   ) +
   theme_bw()
 
+dir.create("graphs", showWarnings = FALSE)
+
 # compositing with patchwork package
 library(patchwork)
-p + p2 + 
-  plot_layout(ncol = 1) + 
+combined_plot <- p + p2 +
+  plot_layout(ncol = 1) +
   plot_annotation(
     tag_levels = "a",
     tag_prefix = "(",
     tag_suffix = ")"
   )
+
+ggsave(file.path("graphs", "dem_phenology.png"), combined_plot)
+
 # convert to data frame and merge
 dem_df <- as.vector(dem)
 phenology_df <- as.vector(phenology_raster)
@@ -121,26 +94,15 @@ sct_df <- data.frame(
   doy = phenology_df
 )
 
-ggplot(
-  data = sct_df,
-  aes(
-    altitude,
-    doy
-  )
-) +
+scatter_plot <- ggplot(data = sct_df, aes(altitude, doy)) +
   geom_hex() +
-  scale_fill_viridis_c(trans="log10") +
-  geom_smooth(
-    method = "lm",
-    se = FALSE,
-    colour = "white",
-    lty = 2
-  ) +
-  labs(
-    x = "altitude (m)",
-    y = "MODIS vegetation greenup (DOY)"
-  ) +
+  scale_fill_viridis_c(trans = "log10") +
+  geom_smooth(method = "lm", se = FALSE, colour = "white", lty = 2) +
+  labs(x = "altitude (m)", y = "MODIS vegetation greenup (DOY)") +
   theme_bw()
+
+ggsave(file.path("graphs", "scatter_altitude_doy.png"), scatter_plot)
+
 # fit a linear regression to the data of the figure above
 # (for the pre-processing see the collapsed code of the figure)
 fit <- lm(doy ~ altitude, data = sct_df)

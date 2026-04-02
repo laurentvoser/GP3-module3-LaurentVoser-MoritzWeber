@@ -10,6 +10,9 @@ output: html_document
 The intercept indicates the value of the outcome (DOY) when the predictor (altitude) is zero.
 
 2. How can you interpret the slope?
+```{r}
+knitr::include_graphics("graphs/scatter_altitude_doy.png")
+```
 
 With higher altitude, the DOY increases (~37 days per 1'000 m of elevation gain), meaning the vegetation greenup is later in the year.
 
