@@ -1,4 +1,7 @@
-
+library(MODISTools)
+lat <- 43.5
+lon <- -74.5
+years <- 2001:2010
 
 ## MODIS Phenology-Daten laden
 phenology <- mt_subset(

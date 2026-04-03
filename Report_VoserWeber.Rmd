@@ -1,6 +1,8 @@
 ---
 title: "Report_VoserWeber"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ## 8.1.1 Physical geography and phenology
