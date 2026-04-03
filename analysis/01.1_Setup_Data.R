@@ -28,3 +28,5 @@ land_cover <- mt_subset(
   internal = TRUE
 )
 write.csv(land_cover, "data-raw/land_cover.csv", row.names = FALSE)
+
+dem_us <- geodata::elevation_30s(country="USA", path="data-raw/")

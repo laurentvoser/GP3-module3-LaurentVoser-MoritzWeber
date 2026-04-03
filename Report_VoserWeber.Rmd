@@ -164,7 +164,7 @@ tm <- tm_tiles("OpenStreetMap") +
   tm_title("Phenology Patterns 2010")
 
 tm
-```
-
+``` 
+A large part of the examined forested area was subjected to early greenup when compared to the long term trend from 2001 to 2009. There is a regional occurrence of late maturity as well as neither early greenup nor late maturity. When looking at the boxplot relating the phenology patterns to elevation, it is apparent that the areas with phenology consistent with the long term mean are situated in locations with higher elevation - possibly counteracting the early greenup caused by rising temperatures through colder temperatures due to higher elevation. Areas of late maturity are situated just a little lower than areas of early greenup, which may indicate another cause than elevation for their differing phenology.
 
 
