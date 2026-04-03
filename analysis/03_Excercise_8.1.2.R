@@ -19,16 +19,6 @@ maturity <- phenology %>% filter(band=="Maturity.Num_Modes_01")
 greenup_raster <- mt_to_terra(greenup, reproject=TRUE)
 maturity_raster <- mt_to_terra(maturity, reproject=TRUE)
 
-# --- Landcover filtern (2010) ---
-land_cover <- mt_subset(
-  product = "MCD12Q1",
-  lat = lat, lon = lon,
-  band = "LC_Type1",
-  start = "2010-01-01", end = "2010-12-31",
-  km_lr = 100, km_ab = 100,
-  site_name = "adirondacks_lc",
-  internal = TRUE
-)
 lc_raster <- mt_to_terra(land_cover, reproject = TRUE)
 mask_forest <- lc_raster %in% c(4,5)
 

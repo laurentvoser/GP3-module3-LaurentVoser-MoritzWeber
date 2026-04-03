@@ -49,7 +49,7 @@ years <- 2001:2010
 ##Daten einlesen
 ```{r}
 phenology <- read.csv("data-raw/phenology.csv")
-land_cover <- read.csv("data-raw/land_cover")
+land_cover <- read.csv("data-raw/land_cover.csv")
 ```
 
 ##Daten Aufbereiten
@@ -145,8 +145,8 @@ vals_early <- if(length(vals_early)==0) NA else vals_early
 vals_late  <- if(length(vals_late)==0) NA else vals_late
 vals_rest  <- if(length(vals_rest)==0) NA else vals_rest
 
-boxplot(vals_early, vals_late,
-        names=c("Early Greenup","Late Maturity"),
+boxplot(vals_early, vals_late, vals_rest,
+        names=c("Early Greenup","Late Maturity", "not affected"),
         main="Elevation vs. Phenology Patterns",
         ylab="Elevation (m.a.s.l.)")
 ```
