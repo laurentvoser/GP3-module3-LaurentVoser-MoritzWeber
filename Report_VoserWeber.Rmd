@@ -1,6 +1,8 @@
 ---
 title: "Report_VoserWeber"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ## 8.1.1 Physical geography and phenology
@@ -47,7 +49,7 @@ years <- 2001:2010
 ##Daten einlesen
 ```{r}
 phenology <- read.csv("data-raw/phenology.csv")
-land_cover <- read.csv("data-raw/land_cover")
+land_cover <- read.csv("data-raw/land_cover.csv")
 ```
 
 ##Daten Aufbereiten
@@ -143,8 +145,8 @@ vals_early <- if(length(vals_early)==0) NA else vals_early
 vals_late  <- if(length(vals_late)==0) NA else vals_late
 vals_rest  <- if(length(vals_rest)==0) NA else vals_rest
 
-boxplot(vals_early, vals_late,
-        names=c("Early Greenup","Late Maturity"),
+boxplot(vals_early, vals_late, vals_rest,
+        names=c("Early Greenup","Late Maturity", "not affected"),
         main="Elevation vs. Phenology Patterns",
         ylab="Elevation (m.a.s.l.)")
 ```
@@ -162,7 +164,7 @@ tm <- tm_tiles("OpenStreetMap") +
   tm_title("Phenology Patterns 2010")
 
 tm
-```
-
+``` 
+A large part of the examined forested area was subjected to early greenup when compared to the long term trend from 2001 to 2009. There is a regional occurrence of late maturity as well as neither early greenup nor late maturity. When looking at the boxplot relating the phenology patterns to elevation, it is apparent that the areas with phenology consistent with the long term mean are situated in locations with higher elevation - possibly counteracting the early greenup caused by rising temperatures through colder temperatures due to higher elevation. Areas of late maturity are situated just a little lower than areas of early greenup, which may indicate another cause than elevation for their differing phenology.
 
 

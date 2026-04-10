@@ -1,4 +1,7 @@
-
+library(MODISTools)
+lat <- 43.5
+lon <- -74.5
+years <- 2001:2010
 
 ## MODIS Phenology-Daten laden
 phenology <- mt_subset(
@@ -25,3 +28,5 @@ land_cover <- mt_subset(
   internal = TRUE
 )
 write.csv(land_cover, "data-raw/land_cover.csv", row.names = FALSE)
+
+dem_us <- geodata::elevation_30s(country="USA", path="data-raw/")
