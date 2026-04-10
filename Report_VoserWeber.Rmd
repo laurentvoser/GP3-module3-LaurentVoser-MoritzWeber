@@ -124,7 +124,7 @@ terra::plot(early_greenup, main="Early Greenup 2010")
 terra::plot(late_maturity, main="Late Maturity 2010")
 ```
 
-##Greenup und Maturity vs. 
+##Greenup und Maturity vs. Elevation
 ```{r}
 dem_us <- geodata::elevation_30s(country="USA", path=tempdir())
 dem_us <- terra::project(dem_us, crs(greenup_raster))
