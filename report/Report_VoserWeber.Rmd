@@ -13,7 +13,7 @@ The intercept indicates the value of the outcome (DOY) when the predictor (altit
 
 2. How can you interpret the slope?
 ```{r}
-knitr::include_graphics("graphs/scatter_altitude_doy.png")
+knitr::include_graphics("../graphs/scatter_altitude_doy.png")
 ```
 
 With higher altitude, the DOY increases (~37 days per 1'000 m of elevation gain), meaning the vegetation greenup is later in the year.
@@ -43,8 +43,8 @@ library(tmap)
 ```
 ##Daten einlesen
 ```{r}
-phenology <- read.csv("data-raw/phenology.csv")
-land_cover <- read.csv("data-raw/land_cover.csv")
+phenology <- read.csv("../data-raw/phenology.csv")
+land_cover <- read.csv("../data-raw/land_cover.csv")
 ```
 
 ##Daten Aufbereiten
@@ -116,9 +116,12 @@ early_greenup <- greenup_2010 < (greenup_ltm - greenup_sd)
 late_maturity  <- maturity_2010 > (maturity_ltm + maturity_sd)
 
 #Kontrolle Plot
-par(mfrow=c(1,2))
-terra::plot(early_greenup, main="Early Greenup 2010")
-terra::plot(late_maturity, main="Late Maturity 2010")
+png("../plots/phenology_patterns_2010.png", width = 1200, height = 600, res = 150)
+par(mfrow = c(1, 2))
+terra::plot(early_greenup, main = "Early Greenup 2010")
+terra::plot(late_maturity, main = "Late Maturity 2010")
+dev.off()
+
 ```
 
 ###Boxplot: Greenup und Maturity vs. Elevation
@@ -148,7 +151,7 @@ boxplot(vals_early, vals_late, vals_rest,
 
 ###Karte erstellen "tmap"
 ```{r}
-tmap_mode("plot")
+tmap_mode("view")
 
 tm <- tm_tiles("OpenStreetMap") +
   tm_shape(ifel(as.numeric(mask_forest_aligned) == 1, 1, NA)) +
@@ -161,6 +164,35 @@ tm <- tm_tiles("OpenStreetMap") +
 
 tm
 ``` 
+###Possible map with leaflet
+```{r}
+library(leaflet)
+library(leaflet.extras)
+
+# Convert SpatRasters to a format leaflet understands
+# leaflet needs WGS84 (EPSG:4326)
+forest_wgs  <- project(ifel(as.numeric(mask_forest_aligned) == 1, 1, NA), "EPSG:4326")
+early_wgs   <- project(ifel(as.numeric(early_greenup) == 1, 1, NA),        "EPSG:4326")
+late_wgs    <- project(ifel(as.numeric(late_maturity)  == 1, 1, NA),        "EPSG:4326")
+
+# Colour palettes (single value rasters: just one colour)
+pal_forest <- colorNumeric("Greens",  values(forest_wgs), na.color = "transparent")
+pal_early  <- colorNumeric("Purples", values(early_wgs),  na.color = "transparent")
+pal_late   <- colorNumeric("Reds",    values(late_wgs),   na.color = "transparent")
+
+leaflet() %>%
+  addProviderTiles(providers$OpenStreetMap, group = "OSM") %>%
+  addRasterImage(forest_wgs, colors = pal_forest, opacity = 0.7, group = "Forest Mask") %>%
+  addRasterImage(early_wgs,  colors = pal_early,  opacity = 0.6, group = "Early Greenup") %>%
+  addRasterImage(late_wgs,   colors = pal_late,   opacity = 0.6, group = "Late Maturity") %>%
+  addLayersControl(
+    baseGroups    = "OSM",
+    overlayGroups = c("Forest Mask", "Early Greenup", "Late Maturity"),
+    options       = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  addLegend(pal = pal_early, values = values(early_greenup),  title = "Early Greenup", position = "bottomright") %>%
+  addLegend(pal = pal_late,  values = values(late_maturity),   title = "Late Maturity",  position = "bottomright")
+```
 
 
 ## Discussion
