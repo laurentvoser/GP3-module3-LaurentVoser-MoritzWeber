@@ -1,9 +1,16 @@
 ---
 title: "Report_VoserWeber"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
+
+```{r}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE
+)
+```
 
 # 8.1.1 Physical geography and phenology
 
@@ -33,7 +40,7 @@ For the years 2001 - 2009 calculate the long term mean (LTM) and standard deviat
 Describe the observed patterns and speculate about the underlying reasons. In addition, download a digital elevation map for the United States (30s resolution), and compare differences in altitude (e.g. a boxplot) across locations where you do or do not see any patterns in phenology.
 
 ## Code
-###Setup
+### Setup
 ```{r}
 library(MODISTools)
 library(terra)
@@ -41,13 +48,13 @@ library(tidyverse)
 library(geodata)
 library(tmap)
 ```
-##Daten einlesen
+## Daten einlesen
 ```{r}
 phenology <- read.csv("../data-raw/phenology.csv")
 land_cover <- read.csv("../data-raw/land_cover.csv")
 ```
 
-##Daten Aufbereiten
+## Daten Aufbereiten
 ```{r}
 phenology <- phenology %>%
   mutate(
@@ -64,7 +71,7 @@ maturity_raster <- mt_to_terra(maturity, reproject=TRUE)
 ```
 
 
-###Land Cover (Wald) Maske erstellen
+### Land Cover (Wald) Maske erstellen
 ```{r}
 lc_raster <- mt_to_terra(land_cover, reproject = TRUE)
 mask_forest <- lc_raster %in% c(4,5)
@@ -120,13 +127,15 @@ png("../plots/phenology_patterns_2010.png", width = 1200, height = 600, res = 15
 par(mfrow = c(1, 2))
 terra::plot(early_greenup, main = "Early Greenup 2010")
 terra::plot(late_maturity, main = "Late Maturity 2010")
-dev.off()
+invisible(dev.off())
 
+knitr::include_graphics("../plots/phenology_patterns_2010.png")
 ```
 
-###Boxplot: Greenup und Maturity vs. Elevation
+### Boxplot: Greenup und Maturity vs. Elevation
 ```{r}
-dem_us <- geodata::elevation_30s(country="USA", path=tempdir())
+setwd("..")
+dem_us <- terra::rast("data-raw/USA_elv_msk.tif")
 dem_us <- terra::project(dem_us, crs(greenup_raster))
 dem_resampled <- terra::resample(dem_us, greenup_raster_doy[[10]], method="bilinear")
 
@@ -149,7 +158,7 @@ boxplot(vals_early, vals_late, vals_rest,
         ylab="Elevation (m.a.s.l.)")
 ```
 
-###Karte erstellen "tmap"
+### Karte erstellen "tmap"
 ```{r}
 tmap_mode("view")
 
@@ -164,7 +173,7 @@ tm <- tm_tiles("OpenStreetMap") +
 
 tm
 ``` 
-###Possible map with leaflet
+### Possible map with leaflet
 ```{r}
 library(leaflet)
 library(leaflet.extras)
@@ -196,6 +205,10 @@ leaflet() %>%
 
 
 ## Discussion
-A large part of the examined forested area was subjected to early greenup when compared to the long term trend from 2001 to 2009. There is a regional occurrence of late maturity as well as neither early greenup nor late maturity. When looking at the boxplot relating the phenology patterns to elevation, it is apparent that the areas with phenology consistent with the long term mean are situated in locations with higher elevation - possibly counteracting the early greenup caused by rising temperatures through colder temperatures due to higher elevation. Areas of late maturity are situated just a little lower than areas of early greenup, which may indicate another cause than elevation for their differing phenology.
+The analysis reveals widespread early greenup across the Adirondack forested area in 2010, suggesting an unusually warm spring relative to the 2001–2009 baseline. This is likely linked to large-scale atmospheric patterns such as the North Atlantic Oscillation (NAO), which strongly influences spring temperatures in the Northeastern United States. Late maturity anomalies are spatially more limited and regionally clustered, possibly driven by localised late-season frost events or cloud cover anomalies delaying canopy development despite the early seasonal start.
+
+Regarding elevation, unaffected areas tend to occur at higher elevations. This is somewhat counterintuitive, but can be explained by the warming signal in 2010 being most pronounced at lower elevations, while higher elevation sites remained cold enough to keep phenology within the long-term norm. Late maturity areas are situated slightly lower than early greenup areas, suggesting that factors beyond temperature – such as soil moisture or local wind exposure – also play a role.
+
+It should be noted that the MODIS 500m resolution limits detection of fine-scale patterns, the nine-year reference period may not fully capture natural variability, and the ±1 SD threshold produces a binary classification that simplifies the continuous nature of phenological change.
 
 

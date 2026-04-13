@@ -1,4 +1,8 @@
 library(MODISTools)
+library(terra)
+library(tidyverse)
+library(geodata)
+library(tmap)
 lat <- 43.5
 lon <- -74.5
 years <- 2001:2010
@@ -29,4 +33,5 @@ land_cover <- mt_subset(
 )
 write.csv(land_cover, "data-raw/land_cover.csv", row.names = FALSE)
 
-dem_us <- geodata::elevation_30s(country="USA", path="data-raw/")
+dem_us <- geodata::elevation_30s(country="USA", path=tempdir())
+terra::writeRaster(dem_us, "data-raw/USA_elv_msk.tif", overwrite=TRUE)
