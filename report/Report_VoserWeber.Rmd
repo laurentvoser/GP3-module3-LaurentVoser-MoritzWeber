@@ -1,16 +1,19 @@
 ---
-title: "Report_VoserWeber"
+title: "Report Geoprocessing Module 3"
 output:
   html_document: default
   pdf_document: default
+authors: "Laurent Voser & Moritz Weber"
 ---
 
-```{r}
+```{r include=FALSE}
 knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE
 )
 ```
+# Introduction 
+The goal of this exercise was to go through the R book "A Handful of Pixels" and solve exercises 8.1.1 and 8.1.2. The main subject of these exercises was phenology modelling. 
 
 # 8.1.1 Physical geography and phenology
 
@@ -19,7 +22,7 @@ knitr::opts_chunk$set(
 The intercept indicates the value of the outcome (DOY) when the predictor (altitude) is zero.
 
 2. How can you interpret the slope?
-```{r}
+```{r include=FALSE} 
 knitr::include_graphics("../graphs/scatter_altitude_doy.png")
 ```
 
@@ -48,13 +51,13 @@ library(tidyverse)
 library(geodata)
 library(tmap)
 ```
-## Daten einlesen
+### Daten einlesen
 ```{r}
 phenology <- read.csv("../data-raw/phenology.csv")
 land_cover <- read.csv("../data-raw/land_cover.csv")
 ```
 
-## Daten Aufbereiten
+### Daten Aufbereiten
 ```{r}
 phenology <- phenology %>%
   mutate(
@@ -79,7 +82,6 @@ mask_forest <- lc_raster %in% c(4,5)
 
 ### DOY-Raster erstellen
 ```{r}
-
 # Use raw (unmasked) rasters as source for DOY conversion
 greenup_raw  <- mt_to_terra(greenup,   reproject = TRUE)
 maturity_raw <- mt_to_terra(maturity,  reproject = TRUE)
@@ -134,8 +136,7 @@ knitr::include_graphics("../plots/phenology_patterns_2010.png")
 
 ### Boxplot: Greenup und Maturity vs. Elevation
 ```{r}
-setwd("..")
-dem_us <- terra::rast("data-raw/USA_elv_msk.tif")
+dem_us <- terra::rast("../data-raw/USA_elv_msk.tif")
 dem_us <- terra::project(dem_us, crs(greenup_raster))
 dem_resampled <- terra::resample(dem_us, greenup_raster_doy[[10]], method="bilinear")
 
@@ -158,7 +159,7 @@ boxplot(vals_early, vals_late, vals_rest,
         ylab="Elevation (m.a.s.l.)")
 ```
 
-### Karte erstellen "tmap"
+### Map with "tmap"
 ```{r}
 tmap_mode("view")
 
@@ -173,7 +174,7 @@ tm <- tm_tiles("OpenStreetMap") +
 
 tm
 ``` 
-### Possible map with leaflet
+### Map with "leaflet"
 ```{r}
 library(leaflet)
 library(leaflet.extras)
